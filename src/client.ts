@@ -359,7 +359,17 @@ export class TypeSafeClient {
       "Content-Type": req.body === undefined ? undefined : "application/json",
       "X-TypeSafe-Retry-Count": undefined,
     });
-    const body = req.body === undefined ? undefined : JSON.stringify(req.body);
+    const body =
+      req.body === undefined
+        ? undefined
+        : JSON.stringify(req.body, (_key, value: unknown) => {
+            if (typeof value === "number" && !Number.isFinite(value)) {
+              throw new TypeSafeError(
+                "Request body contains a non-finite number; JSON would replace it with null.",
+              );
+            }
+            return value;
+          });
 
     for (let attempt = 0; ; attempt++) {
       const retriesLeft = req.retry.maxRetries - attempt;

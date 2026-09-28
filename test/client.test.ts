@@ -209,6 +209,20 @@ describe("requests", () => {
     expect(result.answers.q1.noul).toBe(0.5);
   });
 
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "rejects non-finite Jev state value %s before sending the request",
+    async (value) => {
+      const { fetch, requests } = mockFetch(() => json(SYSTEM_ONE_RESPONSE));
+      const client = new TypeSafeClient({ apiKey: "k", fetch });
+      await expect(
+        client.systemOne({ state: { nested: [value] }, questions: { q: noul("check") } }),
+      ).rejects.toThrow(
+        "Request body contains a non-finite number; JSON would replace it with null.",
+      );
+      expect(requests).toHaveLength(0);
+    },
+  );
+
   it("sends the request object as the payload, filling in the default model", async () => {
     const { fetch, requests } = mockFetch(() => json(SYSTEM_ONE_RESPONSE));
     const client = new TypeSafeClient({ apiKey: "k", fetch });
